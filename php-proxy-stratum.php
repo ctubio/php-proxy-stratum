@@ -28,9 +28,10 @@ class Stratum {
       $this->l('connected, total: '.(count($this->s) - 1).'.');
       unset($r[array_search($this->s[0], $r)]);
     }
-    foreach ($r as $_r) {
-      $_d = @socket_read($_r, 2048, PHP_NORMAL_READ);
-      $k = ($_k = array_search($_r, $this->s)) ?: array_search($_r, $this->p);
+    $ic = count($ik = array_keys($r));
+    for($i=0;$i<$ic;$i++) {
+      $_d = @socket_read($r[$ik[$i]], 2048, PHP_NORMAL_READ);
+      $k = ($_k = array_search($r[$ik[$i]], $this->s)) ?: array_search($r[$ik[$i]], $this->p);
       if ($_d === FALSE) $this->k($k, 'lost');
       else if (!$_k) {
         if ($this->s[$k]) {
@@ -93,9 +94,8 @@ class Stratum {
   }
 
   private function l($m) {
-    echo date('H:i:s'), ': Client ', $m, (
-      (strpos($m, PHP_EOL)===FALSE && strpos($m, "\n")===FALSE)
-        ? PHP_EOL : NULL
+    print date('H:i:s') .': Client '.$m.(
+      strpos($m, "\n")===FALSE ? PHP_EOL : NULL
     );
   }
 }
