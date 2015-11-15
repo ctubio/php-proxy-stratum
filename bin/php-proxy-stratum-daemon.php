@@ -123,6 +123,7 @@ class Stratum {
           foreach($this->o as $k => $o) {
             if (!$o || $o->u!=$h->params[0]) continue;
             $this->c($k, $h->params[1]);
+            break;
           }
           break;
       }
@@ -164,6 +165,7 @@ class U {
     if (socket_connect($p, $this->P[0], $this->P[1])) return $this->P;
     return FALSE;
   }
+
   public function d($d) {
     return ($d && isset($this->u)) ? strtr($d, array($this->u => $this->P[2])) : $d;
   }
