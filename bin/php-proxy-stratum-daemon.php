@@ -47,7 +47,7 @@ class Stratum {
     foreach($r as $_r) {
       $k = ($_k = array_search($_r, $this->s)) ?: array_search($_r, $this->p);
       $_d = $this->o[$k]->d(@socket_read($_r, 2048, PHP_NORMAL_READ));
-      if ($_d === FALSE) $this->k($k, $_k.'lost');
+      if ($_d === FALSE) $this->k($k, 'lost');
       else if ($_k === FALSE) {
         if ($this->s[$k]) {
           $d = json_decode($_d);
@@ -76,17 +76,7 @@ class Stratum {
             socket_write($this->s[$k], '{"error":null,"id":'.$d->id.',"result":true}'."\n");
             if (isset($d->params) && isset($d->params[0]) && $d->params[0]) {
               $this->o[$k]->u = $d->params[0];
-              if (!$this->p[$k]) {
-                $this->p[$k] = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
-                if (!($p = $this->o[$k]->c($this->p[$k]))) $this->k($k, 'lost pools');
-                else if ($this->o[$k]->s) {
-                  $this->l($k.' connected to '.$p[0].':'.$p[1].' as '.$p[2].'.');
-                  $this->l('server '.$k.' gets '.$this->o[$k]->s[1]);
-                  socket_write($this->p[$k], $this->o[$k]->s[1]);
-                  $this->l('server '.$k.' gets '.$this->o[$k]->d($_d));
-                  socket_write($this->p[$k], $this->o[$k]->d($_d));
-                } else $this->k($k, 'lost subscribe.');
-              }
+              $this->c($k);
             } else $this->k($k, 'unkown.');
           } else if ($this->p[$k]) {
             $this->l('server '.$k.' gets '.$_d);
@@ -95,6 +85,17 @@ class Stratum {
         } else $this->k($k, 'said garbage');
       }
     }
+  }
+
+  private function c($k, $o = 0) {
+    if ($this->p[$k]) socket_close($this->p[$k]);
+    $this->p[$k] = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+    if (!($p = $this->o[$k]->c($this->p[$k], $o))) $this->k($k, 'lost pools');
+    else if ($this->o[$k]->s) {
+      socket_write($this->p[$k], $this->o[$k]->s[1]);
+      socket_write($this->p[$k], '{"id": '.($this->o[$k]->s[0]+1).', "method": "mining.authorize", "params": ["'.$p[2].'", "x"]}'."\n");
+      $this->l($k.' connected to '.$p[0].':'.$p[1].' as '.$p[2].'.');
+    } else $this->k($k, 'miss subscribe.');
   }
 
   private function k($k, $m) {
@@ -121,16 +122,7 @@ class Stratum {
         case 'switchpool':
           foreach($this->o as $k => $o) {
             if (!$o || $o->u!=$h->params[0]) continue;
-            socket_close($this->p[$k]);
-            $this->p[$k] = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
-            if (!($p = $o->c($this->p[$k], $h->params[1]))) $this->k($k, 'lost pools');
-            else if ($o->s) {
-              $this->l($k.' connected to '.$p[0].':'.$p[1].' as '.$p[2].'.');
-              $this->l('server '.$k.' gets '.$o->s[1]);
-              socket_write($this->p[$k], $o->s[1]);
-              $this->l('server '.$k.' gets '.$o->d('{"id": '.($o->s[0]+1).', "method": "mining.authorize", "params": ["'.$p[2].'", "x"]}'));
-              socket_write($this->p[$k], $o->d('{"id": '.($o->s[0]+1).', "method": "mining.authorize", "params": ["'.$p[2].'", "x"]}'."\n"));
-            } else $this->k($k, 'lost subscribe.');
+            $this->c($k, $h->params[1]);
           }
           break;
       }
@@ -163,11 +155,11 @@ class U {
     }
   }
 
-  public function c($p, $_k = 0) {
+  public function c($p, $o = 0) {
     if (!isset($this->u)) return FALSE;
     if (isset($this->p[$this->u]) && isset($this->p[$this->u]['p']))
-      foreach($this->p[$this->u]['p'] as $k => $_p)
-        if ($k<$_k) continue;
+      foreach($this->p[$this->u]['p'] as $_o => $_p)
+        if ($_o<$o) continue;
         else if (socket_connect($p, $_p[0], $_p[1])) return $this->P = $_p;
     if (socket_connect($p, $this->P[0], $this->P[1])) return $this->P;
     return FALSE;
