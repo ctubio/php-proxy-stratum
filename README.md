@@ -1,8 +1,10 @@
 # php-proxy-stratum
-Transparent **stratum+tcp** proxy between miners and pools.
+Transparent **stratum+tcp** proxy between miners and pools, with minimal web interface.
 ```
-$ php php-proxy-stratum.php
+$ php bin/php-proxy-stratum-daemon.php
 ```
+Feel free to configure your webserver with ```pub/``` as the document root and ```php-proxy-stratum.php``` as the index file.
+
 Enjoy:exclamation:
 
 #### Very special thanks to:
