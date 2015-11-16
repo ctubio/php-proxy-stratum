@@ -119,7 +119,18 @@ class Stratum {
           foreach($this->o as $k => $o) {
             if (!$o) continue;
             if ($o->u)
-              $d['result'][] = $o->u.' is fuckin connected with '.$o->v.' to '.$o->P[0].' at '.$o->F.' diff and '.$o->H300.'GH/s 5min avg and '.$o->H3600.'GH/s 1hour avg and '.$o->H86400.'GH/s 1day avg hashrate as '.$o->P[2].'.';
+              $d['result'][] = array(
+                'user'=>$o->u,
+                'version'=>$o->v,
+                'pool'=>$o->P,
+                'diff'=>$o->F,
+                'GH/s 1min avg'=>$o->H60,
+                '1min shares'=>count($o->S60),
+                'GH/s 5min avg'=>$o->H300,
+                '5min shares'=>count($o->S300),
+                'GH/s 1hour avg'=>$o->H3600,
+                '1hour shares'=>count($o->S3600)
+              );
             else $d['result'][] = $k.' is zombie.';
           }
           break;
@@ -134,7 +145,7 @@ class Stratum {
     return json_encode($d);
   }
 
-  private function l($m) {# return;
+  private function l($m) { return;
     print date('H:i:s') .': Client '.$m.(strpos($m, "\n")===FALSE ? PHP_EOL : NULL);
   }
 }
@@ -142,15 +153,12 @@ class Stratum {
 class U {
   public $v = NULL;
   public $s = NULL;
-  public $H300 = 0;
-  public $S300 = 0;
-  public $St300 = 0;
-  public $H3600 = 0;
-  public $S3600 = 0;
-  public $St3600 = 0;
-  public $H86400 = 0;
-  public $S86400 = 0;
-  public $St86400 = 0;
+  public $H60 = '0,00';
+  public $S60 = array();
+  public $H300 = '0,00';
+  public $S300 = array();
+  public $H3600 = '0,00';
+  public $S3600 = array();
   public $F = 0;
   public $P = NULL;
   private $p = NULL;
@@ -189,26 +197,24 @@ class U {
   }
 
   public function t($F = FALSE) {
+    $t = time();
     if ($F) {
-      $this->S300 += $this->F;
-      $this->S3600 += $this->F;
-      $this->S86400 += $this->F;
+      if (!isset($this->S60[(string)$t])) $this->S60[(string)$t] = 0;
+      $this->S60[(string)$t] += $this->F;
+      if (!isset($this->S300[(string)$t])) $this->S300[(string)$t] = 0;
+      $this->S300[(string)$t] += $this->F;
+      if (!isset($this->S3600[(string)$t])) $this->S3600[(string)$t] = 0;
+      $this->S3600[(string)$t] += $this->F;
     }
-    if ($this->St300<time()) {
-      $this->H300 = number_format(14316776.11*$this->S300/exp(21), 2, ',', '.');
-      $this->S300 = 0;
-      $this->St300 = time() + 300;
-    }
-    if ($this->St3600<time()) {
-      $this->H3600 = number_format(1193064.6758333*$this->S3600/exp(21), 2, ',', '.');
-      $this->S3600 = 0;
-      $this->St3600 = time() + 3600;
-    }
-    if ($this->St86400<time()) {
-      $this->H86400 = number_format(49711.028159722*$this->S86400/exp(21), 2, ',', '.');
-      $this->S86400 = 0;
-      $this->St86400 = time() + 86400;
-    }
+    $c = count($k = array_keys($this->S60));
+    for($i=0;$i<$c;$i++) if ($k[$i]<$t-60) unset($this->S60[(string)$k[$i]]);
+    $this->H60 = number_format(bcmul(0.054278081763042, array_sum($this->S60?:array(0)), 2), 2, ',', '.');
+    $c = count($k = array_keys($this->S300));
+    for($i=0;$i<$c;$i++) if ($k[$i]<$t-300) unset($this->S300[$k[$i]]);
+    $this->H300 = number_format(bcmul(0.010855616352608, array_sum($this->S300?:array(0)), 2), 2, ',', '.');
+    $c = count($k = array_keys($this->S3600));
+    for($i=0;$i<$c;$i++)  if ($k[$i]<$t-3600) unset($this->S3600[$k[$i]]);
+    $this->H3600 = number_format(bcmul(0.00090463469605071, array_sum($this->S3600?:array(0)), 2), 2, ',', '.');
   }
 
   public function d($d) {
