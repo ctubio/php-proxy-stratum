@@ -124,12 +124,10 @@ class Stratum {
                 'version'=>$o->v,
                 'pool'=>$o->P,
                 'diff'=>$o->F,
-                'GH/s 1min avg'=>$o->H60,
-                '1min shares'=>count($o->S60),
-                'GH/s 5min avg'=>$o->H300,
-                '5min shares'=>count($o->S300),
-                'GH/s 1hour avg'=>$o->H3600,
-                '1hour shares'=>count($o->S3600)
+                '1min GHps'=>$o->H60,
+                '5min GHps'=>$o->H300,
+                '10min GHps'=>$o->H600,
+                '1hour GHps'=>$o->H3600
               );
             else $d['result'][] = $k.' is zombie.';
           }
@@ -153,12 +151,11 @@ class Stratum {
 class U {
   public $v = NULL;
   public $s = NULL;
+  public $S = array();
   public $H60 = '0,00';
-  public $S60 = array();
   public $H300 = '0,00';
-  public $S300 = array();
+  public $H600 = '0,00';
   public $H3600 = '0,00';
-  public $S3600 = array();
   public $F = 0;
   public $P = NULL;
   private $p = NULL;
@@ -197,24 +194,23 @@ class U {
   }
 
   public function t($F = FALSE) {
-    $t = time();
+    $t = (string)microtime(TRUE);
     if ($F) {
-      if (!isset($this->S60[(string)$t])) $this->S60[(string)$t] = 0;
-      $this->S60[(string)$t] += $this->F;
-      if (!isset($this->S300[(string)$t])) $this->S300[(string)$t] = 0;
-      $this->S300[(string)$t] += $this->F;
-      if (!isset($this->S3600[(string)$t])) $this->S3600[(string)$t] = 0;
-      $this->S3600[(string)$t] += $this->F;
-    }
-    $c = count($k = array_keys($this->S60));
-    for($i=0;$i<$c;$i++) if ($k[$i]<$t-60) unset($this->S60[(string)$k[$i]]);
-    $this->H60 = number_format(bcmul(0.054278081763042, array_sum($this->S60?:array(0)), 2), 2, ',', '.');
-    $c = count($k = array_keys($this->S300));
-    for($i=0;$i<$c;$i++) if ($k[$i]<$t-300) unset($this->S300[$k[$i]]);
-    $this->H300 = number_format(bcmul(0.010855616352608, array_sum($this->S300?:array(0)), 2), 2, ',', '.');
-    $c = count($k = array_keys($this->S3600));
-    for($i=0;$i<$c;$i++)  if ($k[$i]<$t-3600) unset($this->S3600[$k[$i]]);
-    $this->H3600 = number_format(bcmul(0.00090463469605071, array_sum($this->S3600?:array(0)), 2), 2, ',', '.');
+      if (!isset($this->S[$t])) $this->S[$t] = 0;
+      $this->S[$t] += $this->F;
+    } # pow(2,48)/65535/600/1e9
+    $c = count($k = array_keys($this->S));
+    for($i=0;$i<$c;$i++)  if ($k[$i]<$t-3600) unset($this->S[$k[$i]]); else break;
+    $this->H3600 = number_format(bcmul(0.0011930646758333, array_sum($this->S?:array(0)), 2), 2, ',', '.');
+    $c = count($k = array_keys($S = $this->S));
+    for($i=0;$i<$c;$i++)  if ($k[$i]<$t-600) unset($S[$k[$i]]); else break;
+    $this->H600 = number_format(bcmul(0.007158388055, array_sum($S?:array(0)), 2), 2, ',', '.');
+    $c = count($k = array_keys($S));
+    for($i=0;$i<$c;$i++) if ($k[$i]<$t-300) unset($S[$k[$i]]); else break;
+    $this->H300 = number_format(bcmul(0.01431677611, array_sum($S?:array(0)), 2), 2, ',', '.');
+    $c = count($k = array_keys($S));
+    for($i=0;$i<$c;$i++) if ($k[$i]<$t-60) unset($S[$k[$i]]); else break;
+    $this->H60 = number_format(bcmul(0.07158388055, array_sum($S?:array(0)), 2), 2, ',', '.');
   }
 
   public function d($d) {
