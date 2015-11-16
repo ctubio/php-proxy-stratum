@@ -61,7 +61,7 @@ class Stratum {
           }
           if(isset($d['method']) && $d['method']=='mining.set_difficulty' && isset($d['params']) && isset($d['params'][0]))
             $this->o[$k]->F = $d['params'][0];
-          $this->t($k);
+          $this->o[$k]->t();
         } else $this->k($k, 'lost before server');
       } else {
         $this->l($k.' says: '.$_d);
@@ -82,7 +82,7 @@ class Stratum {
             } else $this->k($k, 'unkown.');
           } else if ($this->p[$k]) {
             if(isset($d['method']) && $d['method']=='mining.submit' && isset($d['params']) && isset($d['params'][0]) and $d['params'][0]==$this->o[$k]->P[2])
-              $this->t($k, TRUE);
+              $this->o[$k]->t(TRUE);
             $this->l('server '.$k.' gets '.$_d);
             socket_write($this->p[$k], $_d);
           } else $this->k($k, 'lost server');
@@ -108,29 +108,6 @@ class Stratum {
     $this->p = array_values($this->p);
     $this->o = array_values($this->o);
     $this->l($k.' '.$m.', killed.');
-  }
-
-  private function t($k, $F = FALSE) {
-    if ($F) {
-      $this->o[$k]->S300 += $this->o[$k]->F;
-      $this->o[$k]->S3600 += $this->o[$k]->F;
-      $this->o[$k]->S86400 += $this->o[$k]->F;
-    }
-    $this->o[$k]->H300 = number_format(14316776.11*$this->o[$k]->S300/exp(21), 2, ',', '.');
-    $this->o[$k]->H3600 = number_format(1193064.6758333*$this->o[$k]->S3600/exp(21), 2, ',', '.');
-    $this->o[$k]->H86400 = number_format(49711.028159722*$this->o[$k]->S86400/exp(21), 2, ',', '.');
-    if ($this->o[$k]->St300<time()) {
-      $this->o[$k]->S300 = 0;
-      $this->o[$k]->St300 = time() + 300;
-    }
-    if ($this->o[$k]->St3600<time()) {
-      $this->o[$k]->S3600 = 0;
-      $this->o[$k]->St3600 = time() + 3600;
-    }
-    if ($this->o[$k]->St86400<time()) {
-      $this->o[$k]->S86400 = 0;
-      $this->o[$k]->St86400 = time() + 86400;
-    }
   }
 
   private function h($h) {
@@ -209,6 +186,29 @@ class U {
         else if (socket_connect($p, $_p[0], $_p[1])) return $this->P = $_p;
     if (socket_connect($p, $this->P[0], $this->P[1])) return $this->P;
     return FALSE;
+  }
+
+  public function t($F = FALSE) {
+    if ($F) {
+      $this->S300 += $this->F;
+      $this->S3600 += $this->F;
+      $this->S86400 += $this->F;
+    }
+    if ($this->St300<time()) {
+      $this->H300 = number_format(14316776.11*$this->S300/exp(21), 2, ',', '.');
+      $this->S300 = 0;
+      $this->St300 = time() + 300;
+    }
+    if ($this->St3600<time()) {
+      $this->H3600 = number_format(1193064.6758333*$this->S3600/exp(21), 2, ',', '.');
+      $this->S3600 = 0;
+      $this->St3600 = time() + 3600;
+    }
+    if ($this->St86400<time()) {
+      $this->H86400 = number_format(49711.028159722*$this->S86400/exp(21), 2, ',', '.');
+      $this->S86400 = 0;
+      $this->St86400 = time() + 86400;
+    }
   }
 
   public function d($d) {
