@@ -116,18 +116,18 @@ class Stratum {
       $this->o[$k]->S3600 += $this->o[$k]->F;
       $this->o[$k]->S86400 += $this->o[$k]->F;
     }
+    $this->o[$k]->H300 = number_format(14316776.11*$this->o[$k]->S300/exp(21), 2, ',', '.');
+    $this->o[$k]->H3600 = number_format(1193064.6758333*$this->o[$k]->S3600/exp(21), 2, ',', '.');
+    $this->o[$k]->H86400 = number_format(49711.028159722*$this->o[$k]->S86400/exp(21), 2, ',', '.');
     if ($this->o[$k]->St300<time()) {
-      $this->o[$k]->H300 = number_format((((pow(2, 48)/65535)*$this->o[$k]->S300)/300)/exp(21), 2, ',', '.');
       $this->o[$k]->S300 = 0;
       $this->o[$k]->St300 = time() + 300;
     }
     if ($this->o[$k]->St3600<time()) {
-      $this->o[$k]->H3600 = number_format((((pow(2, 48)/65535)*$this->o[$k]->S3600)/3600)/exp(21), 2, ',', '.');
       $this->o[$k]->S3600 = 0;
       $this->o[$k]->St3600 = time() + 3600;
     }
     if ($this->o[$k]->St86400<time()) {
-      $this->o[$k]->H86400 = number_format((((pow(2, 48)/65535)*$this->o[$k]->S86400)/86400)/exp(21), 2, ',', '.');
       $this->o[$k]->S86400 = 0;
       $this->o[$k]->St86400 = time() + 86400;
     }
