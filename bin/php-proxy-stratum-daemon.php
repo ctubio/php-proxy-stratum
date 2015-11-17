@@ -59,9 +59,10 @@ class Stratum {
             $this->l($k.' gets: '.$_d);
             socket_write($this->s[$k], $_d);
           }
-          if(isset($d['method']) && $d['method']=='mining.set_difficulty' && isset($d['params']) && isset($d['params'][0]))
+          if (isset($d['method']) && $d['method']=='mining.set_difficulty' && isset($d['params']) && isset($d['params'][0]))
             $this->o[$k]->F = $d['params'][0];
-          $this->o[$k]->t();
+          if (isset($d['result']) && $d['result']===true && isset($d['id']) && $d['id'])
+            $this->o[$k]->t($d['id']);
         } else $this->k($k, 'lost before server');
       } else {
         $this->l($k.' says: '.$_d);
@@ -82,7 +83,7 @@ class Stratum {
             } else $this->k($k, 'unkown.');
           } else if ($this->p[$k]) {
             if(isset($d['method']) && $d['method']=='mining.submit' && isset($d['params']) && isset($d['params'][0]) and $d['params'][0]==$this->o[$k]->P[2])
-              $this->o[$k]->t(TRUE);
+              $this->o[$k]->t(-$d['id']);
             $this->l('server '.$k.' gets '.$_d);
             socket_write($this->p[$k], $_d);
           } else $this->k($k, 'lost server');
@@ -98,6 +99,7 @@ class Stratum {
     else if ($this->o[$k]->s) {
       socket_write($this->p[$k], $this->o[$k]->s[1]);
       socket_write($this->p[$k], '{"id": '.($this->o[$k]->s[0]+1).', "method": "mining.authorize", "params": ["'.$p[2].'", "'.$p[3].'"]}'."\n");
+      $this->o[$k]->I = array();
       $this->l($k.' connected to '.$p[0].':'.$p[1].' as '.$p[2].'.');
     } else $this->k($k, 'miss subscribe.');
   }
@@ -123,6 +125,7 @@ class Stratum {
                 'user'=>$o->u,
                 'version'=>$o->v,
                 'pool'=>$o->P,
+                'pending'=>$o->I,
                 'diff'=>$o->F,
                 '5min GHps avg'=>number_format($o->H, 2, ',', '.')
               );
@@ -148,8 +151,9 @@ class Stratum {
 class U {
   public $v = NULL;
   public $s = NULL;
+  public $I = array();
   public $S = array();
-  public $H = '0,00';
+  public $H = 0;
   public $Ht = array(0);
   public $F = 0;
   public $P = NULL;
@@ -188,16 +192,21 @@ class U {
     return FALSE;
   }
 
-  public function t($F = FALSE) {
+  public function t($I) {
     $t = (string)microtime(TRUE);
-    if ($F) {
+    if ($I<0) $this->I[abs($I)] = $t;
+    else if (isset($this->I[$I])) {
       if (!isset($this->S[$t])) $this->S[$t] = 0;
       $this->S[$t] += $this->F;
+      unset($this->I[$I]);
+      if ($c = count($k = array_keys($this->I)))
+        for($i=0;$i<$c;$i++) if ($this->I[$k[$i]]<$t-21) unset($this->I[$k[$i]]); else break;
     }
-    $c = count($k = array_keys($this->S)); # pow(2,48)/65535/300/1e9
-    for($i=0;$i<$c;$i++)  if ($k[$i]<$t-300) unset($this->S[$k[$i]]); else break;
-    $this->Ht[] = bcmul(0.01431677611, array_sum($this->S?:array(0)), 2);
-    $this->H = bcdiv(array_sum($this->Ht = array_slice($this->Ht, -99)), count($this->Ht), 2);
+    if ($c = count($k = array_keys($this->S))) { # pow(2,48)/65535/300/1e9
+      for($i=0;$i<$c;$i++) if ($k[$i]<$t-300) unset($this->S[$k[$i]]); else break;
+      $this->Ht[] = bcmul(0.01431677611, array_sum($this->S?:array(0)), 2);
+      $this->H = bcdiv(array_sum($this->Ht = array_slice($this->Ht, -99)), count($this->Ht), 2);
+    }
   }
 
   public function d($d) {
