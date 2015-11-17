@@ -124,6 +124,7 @@ class Stratum {
               $d['result'][] = array(
                 'user'=>$o->u,
                 'version'=>$o->v,
+                'since'=>date(DATE_ISO8601, $o->T),
                 'pool'=>$o->P,
                 'pending'=>$o->I,
                 'diff'=>$o->F,
@@ -151,6 +152,7 @@ class Stratum {
 class U {
   public $v = NULL;
   public $s = NULL;
+  public $T = NULL;
   public $I = array();
   public $S = array();
   public $H = 0;
@@ -194,8 +196,9 @@ class U {
 
   public function t($I) {
     $t = (string)microtime(TRUE);
-    if ($I<0) $this->I[abs($I)] = $t;
+    if ($I<0) $this->I[abs($I)] = (int)$t;
     else if (isset($this->I[$I])) {
+      if (!$this->T) $this->T = (int)$t;
       if (!isset($this->S[$t])) $this->S[$t] = 0;
       $this->S[$t] += $this->F;
       unset($this->I[$I]);
