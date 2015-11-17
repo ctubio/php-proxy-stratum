@@ -40,7 +40,8 @@ class Stratum {
         $this->p[] = NULL;
         $this->o[] = new U();
         $this->s[] = socket_accept($this->s[0]);
-      }
+        $this->l('connected, total: '.$k.'.');
+      } else $this->l('ignored, too many.');
       unset($r[array_search($this->s[0], $r)]);
     }
     foreach($r as $_r) {
@@ -50,23 +51,30 @@ class Stratum {
       else if ($_k === FALSE) {
         if ($this->s[$k]) {
           if (isset($d['id']) && $d['id'] && $d['id'] == $this->o[$k]->s[0]) {
-            if (isset($d['result']) && isset($d['result'][1]) && $d['result'][1])
+            if (isset($d['result']) && isset($d['result'][1]) && $d['result'][1]) {
+              $this->l($k.' gets extranonce ["'.$d['result'][1].'", '.$d['result'][2].'].');
               socket_write($this->s[$k], '{"params":["'.$d['result'][1].'",'.$d['result'][2].'],"method":"mining.set_extranonce","id":null}'."\n");
-          } else if(!isset($d['method']) || $d['method']!='client.show_message')
+            }
+          } else if(!isset($d['method']) || $d['method']!='client.show_message') {
+            $this->l($k.' gets: '.$_d);
             socket_write($this->s[$k], $_d);
+          }
           if(isset($d['method']) && $d['method']=='mining.set_difficulty' && isset($d['params']) && isset($d['params'][0]))
             $this->o[$k]->F = $d['params'][0];
           $this->o[$k]->t();
         } else $this->k($k, 'lost before server');
       } else {
+        $this->l($k.' says: '.$_d);
         if (isset($d['method'])) {
           if ($d['method'] == 'mining.subscribe') {
+            $this->l($k.' gets subscription '.$d['id'].'.');
             socket_write($this->s[$k], '{"id":'.$d['id'].',"result":[[["mining.set_difficulty","1"],["mining.notify","1"]],"00",4],"error":null}'."\n");
             if (!$this->p[$k]) {
               $this->o[$k]->v = (isset($d['params']) && isset($d['params'][0]) && $d['params'][0]) ? $d['params'][0] : 'unknown';
               $this->o[$k]->s = array($d['id'], $_d);
             }
           } else if ($d['method'] == 'mining.authorize') {
+            $this->l($k.' gets authorization '.$d['id'].'.');
             socket_write($this->s[$k], '{"error":null,"id":'.$d['id'].',"result":true}'."\n");
             if (isset($d['params']) && isset($d['params'][0]) && $d['params'][0]) {
               $this->o[$k]->u = $d['params'][0];
@@ -75,6 +83,7 @@ class Stratum {
           } else if ($this->p[$k]) {
             if(isset($d['method']) && $d['method']=='mining.submit' && isset($d['params']) && isset($d['params'][0]) and $d['params'][0]==$this->o[$k]->P[2])
               $this->o[$k]->t(TRUE);
+            $this->l('server '.$k.' gets '.$_d);
             socket_write($this->p[$k], $_d);
           } else $this->k($k, 'lost server');
         } else $this->k($k, 'said garbage');
@@ -89,6 +98,7 @@ class Stratum {
     else if ($this->o[$k]->s) {
       socket_write($this->p[$k], $this->o[$k]->s[1]);
       socket_write($this->p[$k], '{"id": '.($this->o[$k]->s[0]+1).', "method": "mining.authorize", "params": ["'.$p[2].'", "'.$p[3].'"]}'."\n");
+      $this->l($k.' connected to '.$p[0].':'.$p[1].' as '.$p[2].'.');
     } else $this->k($k, 'miss subscribe.');
   }
 
@@ -97,9 +107,11 @@ class Stratum {
     $this->s = array_values($this->s);
     $this->p = array_values($this->p);
     $this->o = array_values($this->o);
+    $this->l($k.' '.$m.', killed.');
   }
 
   private function h($h) {
+    $this->l('HTTP request '.$h);
     $d = array('result'=>NULL);
     if (($h = @json_decode($h, TRUE)) && isset($h['method']))
       switch($h['method']) {
@@ -126,6 +138,10 @@ class Stratum {
           break;
       }
     return json_encode($d);
+  }
+
+  private function l($m) { return;
+    print date('H:i:s') .': Client '.$m.(strpos($m, "\n")===FALSE ? PHP_EOL : NULL);
   }
 }
 
