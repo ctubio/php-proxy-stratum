@@ -8,11 +8,11 @@ class Stratum {
     $this->o = array(NULL);
     $this->p = array(socket_create(AF_INET, SOCK_STREAM, SOL_TCP));
     socket_set_option($this->p[0], SOL_SOCKET, SO_REUSEADDR, 1);
-    socket_bind($this->p[0], 0, 8033) || die('ERROR: Could not bind to address.');
+    socket_bind($this->p[0], 0, 8033) || die('!8033');
     socket_listen($this->p[0]);
     $this->s = array(socket_create(AF_INET, SOCK_STREAM, SOL_TCP));
     socket_set_option($this->s[0], SOL_SOCKET, SO_REUSEADDR, 1);
-    socket_bind($this->s[0], 0, 3333) || die('ERROR: Could not bind to address.');
+    socket_bind($this->s[0], 0, 3333) || die('!3333');
     socket_listen($this->s[0]);
     set_time_limit(0);
     for (;;) {
@@ -40,8 +40,7 @@ class Stratum {
         $this->p[] = NULL;
         $this->o[] = new U();
         $this->s[] = socket_accept($this->s[0]);
-        $this->l('connected, total: '.$k.'.');
-      } else $this->l('ignored, too many.');
+      }
       unset($r[array_search($this->s[0], $r)]);
     }
     foreach($r as $_r) {
@@ -51,30 +50,23 @@ class Stratum {
       else if ($_k === FALSE) {
         if ($this->s[$k]) {
           if (isset($d['id']) && $d['id'] && $d['id'] == $this->o[$k]->s[0]) {
-            if (isset($d['result']) && isset($d['result'][1]) && $d['result'][1]) {
-              $this->l($k.' gets extranonce ["'.$d['result'][1].'", '.$d['result'][2].'].');
+            if (isset($d['result']) && isset($d['result'][1]) && $d['result'][1])
               socket_write($this->s[$k], '{"params":["'.$d['result'][1].'",'.$d['result'][2].'],"method":"mining.set_extranonce","id":null}'."\n");
-            }
-          } else if(!isset($d['method']) || $d['method']!='client.show_message') {
-            $this->l($k.' gets: '.$_d);
+          } else if(!isset($d['method']) || $d['method']!='client.show_message')
             socket_write($this->s[$k], $_d);
-          }
           if(isset($d['method']) && $d['method']=='mining.set_difficulty' && isset($d['params']) && isset($d['params'][0]))
             $this->o[$k]->F = $d['params'][0];
           $this->o[$k]->t();
         } else $this->k($k, 'lost before server');
       } else {
-        $this->l($k.' says: '.$_d);
         if (isset($d['method'])) {
           if ($d['method'] == 'mining.subscribe') {
-            $this->l($k.' gets subscription '.$d['id'].'.');
             socket_write($this->s[$k], '{"id":'.$d['id'].',"result":[[["mining.set_difficulty","1"],["mining.notify","1"]],"00",4],"error":null}'."\n");
             if (!$this->p[$k]) {
               $this->o[$k]->v = (isset($d['params']) && isset($d['params'][0]) && $d['params'][0]) ? $d['params'][0] : 'unknown';
               $this->o[$k]->s = array($d['id'], $_d);
             }
           } else if ($d['method'] == 'mining.authorize') {
-            $this->l($k.' gets authorization '.$d['id'].'.');
             socket_write($this->s[$k], '{"error":null,"id":'.$d['id'].',"result":true}'."\n");
             if (isset($d['params']) && isset($d['params'][0]) && $d['params'][0]) {
               $this->o[$k]->u = $d['params'][0];
@@ -83,7 +75,6 @@ class Stratum {
           } else if ($this->p[$k]) {
             if(isset($d['method']) && $d['method']=='mining.submit' && isset($d['params']) && isset($d['params'][0]) and $d['params'][0]==$this->o[$k]->P[2])
               $this->o[$k]->t(TRUE);
-            $this->l('server '.$k.' gets '.$_d);
             socket_write($this->p[$k], $_d);
           } else $this->k($k, 'lost server');
         } else $this->k($k, 'said garbage');
@@ -97,8 +88,7 @@ class Stratum {
     if (!($p = $this->o[$k]->c($this->p[$k], $o))) $this->k($k, 'lost pools');
     else if ($this->o[$k]->s) {
       socket_write($this->p[$k], $this->o[$k]->s[1]);
-      socket_write($this->p[$k], '{"id": '.($this->o[$k]->s[0]+1).', "method": "mining.authorize", "params": ["'.$p[2].'", "x"]}'."\n");
-      $this->l($k.' connected to '.$p[0].':'.$p[1].' as '.$p[2].'.');
+      socket_write($this->p[$k], '{"id": '.($this->o[$k]->s[0]+1).', "method": "mining.authorize", "params": ["'.$p[2].'", "'.$p[3].'"]}'."\n");
     } else $this->k($k, 'miss subscribe.');
   }
 
@@ -107,11 +97,9 @@ class Stratum {
     $this->s = array_values($this->s);
     $this->p = array_values($this->p);
     $this->o = array_values($this->o);
-    $this->l($k.' '.$m.', killed.');
   }
 
   private function h($h) {
-    $this->l('HTTP says '.$h);
     $d = array('result'=>NULL);
     if (($h = @json_decode($h, TRUE)) && isset($h['method']))
       switch($h['method']) {
@@ -124,10 +112,7 @@ class Stratum {
                 'version'=>$o->v,
                 'pool'=>$o->P,
                 'diff'=>$o->F,
-                '1min GHps'=>$o->H60,
-                '5min GHps'=>$o->H300,
-                '10min GHps'=>$o->H600,
-                '1hour GHps'=>$o->H3600
+                '5min GHps avg'=>number_format($o->H, 2, ',', '.')
               );
             else $d['result'][] = $k.' is zombie.';
           }
@@ -142,20 +127,14 @@ class Stratum {
       }
     return json_encode($d);
   }
-
-  private function l($m) { return;
-    print date('H:i:s') .': Client '.$m.(strpos($m, "\n")===FALSE ? PHP_EOL : NULL);
-  }
 }
 
 class U {
   public $v = NULL;
   public $s = NULL;
   public $S = array();
-  public $H60 = '0,00';
-  public $H300 = '0,00';
-  public $H600 = '0,00';
-  public $H3600 = '0,00';
+  public $H = '0,00';
+  public $Ht = array(0);
   public $F = 0;
   public $P = NULL;
   private $p = NULL;
@@ -165,18 +144,18 @@ class U {
   public function __set($k, $v) {
     $this->$k = $v;
     if ($k=='u') {
-      $this->P = array('solo.ckpool.org', 3333, '1CArLeSkmBT1BkkcADtNrHoLSgHVhBcesk');
+      $this->P = array('solo.ckpool.org', 3333, '1CArLeSkmBT1BkkcADtNrHoLSgHVhBcesk', 'x');
       $this->p = array(
         'analpaper.3' => array(
           'p' => array(
-            array('eu.stratum.bitcoin.cz', 3333, 'analpaper.0'),
-            array('stratum.f2pool.com', 3333, 'analpaper.0')
+            array('eu.stratum.bitcoin.cz', 3333, 'analpaper.0', 'x'),
+            array('stratum.f2pool.com', 3333, 'analpaper.0', 'x')
           )
         ),
         'analpaper.2' => array(
           'p' => array(
-            array('eu.stratum.bitcoin.cz', 3333, 'analpaper.0'),
-            array('stratum.f2pool.com', 3333, 'analpaper.0')
+            array('eu.stratum.bitcoin.cz', 3333, 'analpaper.0', 'x'),
+            array('stratum.f2pool.com', 3333, 'analpaper.0', 'x')
           )
         )
       );
@@ -198,19 +177,11 @@ class U {
     if ($F) {
       if (!isset($this->S[$t])) $this->S[$t] = 0;
       $this->S[$t] += $this->F;
-    } # pow(2,48)/65535/600/1e9
-    $c = count($k = array_keys($this->S));
-    for($i=0;$i<$c;$i++)  if ($k[$i]<$t-3600) unset($this->S[$k[$i]]); else break;
-    $this->H3600 = number_format(bcmul(0.0011930646758333, array_sum($this->S?:array(0)), 2), 2, ',', '.');
-    $c = count($k = array_keys($S = $this->S));
-    for($i=0;$i<$c;$i++)  if ($k[$i]<$t-600) unset($S[$k[$i]]); else break;
-    $this->H600 = number_format(bcmul(0.007158388055, array_sum($S?:array(0)), 2), 2, ',', '.');
-    $c = count($k = array_keys($S));
-    for($i=0;$i<$c;$i++) if ($k[$i]<$t-300) unset($S[$k[$i]]); else break;
-    $this->H300 = number_format(bcmul(0.01431677611, array_sum($S?:array(0)), 2), 2, ',', '.');
-    $c = count($k = array_keys($S));
-    for($i=0;$i<$c;$i++) if ($k[$i]<$t-60) unset($S[$k[$i]]); else break;
-    $this->H60 = number_format(bcmul(0.07158388055, array_sum($S?:array(0)), 2), 2, ',', '.');
+    }
+    $c = count($k = array_keys($this->S)); # pow(2,48)/65535/300/1e9
+    for($i=0;$i<$c;$i++)  if ($k[$i]<$t-300) unset($this->S[$k[$i]]); else break;
+    $this->Ht[] = bcmul(0.01431677611, array_sum($this->S?:array(0)), 2);
+    $this->H = bcdiv(array_sum($this->Ht = array_slice($this->Ht, -99)), count($this->Ht), 2);
   }
 
   public function d($d) {
