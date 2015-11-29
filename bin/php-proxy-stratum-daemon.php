@@ -220,10 +220,7 @@ class M extends mysqli {
       $a = array_map(array($this, 'real_escape_string'), $a);
       array_unshift($a, $q);
       if (!parent::real_query(call_user_func_array('sprintf', $a))) return FALSE;
-      $r = array();
-      $__r = parent::use_result();
-      while($_r = $__r->fetch_assoc()) $r[] = $_r;
-      return $r;
+      return parent::use_result()->fetch_all(MYSQLI_ASSOC);
     }
   }
 }
