@@ -63,7 +63,7 @@ class Stratum {
             $this->o[$k]->F = $d['params'][0];
           if (isset($d['result']) && $d['result']===true && isset($d['id']) && $d['id'])
           $this->o[$k]->t($d['id']);
-        } else $this->k($k, 'lost before server.');
+        } else $this->k($k, 'lost before server');
       } else {
         $this->l($k.' says: '.$_d);
         if (isset($d['method'])) {
@@ -80,14 +80,14 @@ class Stratum {
             if (isset($d['params']) && isset($d['params'][0]) && $d['params'][0]) {
               $this->o[$k]->u = $d['params'][0];
               $this->c($k);
-            } else $this->k($k, 'unkown.');
+            } else $this->k($k, 'unkown');
           } else if ($this->p[$k]) {
             if(isset($d['method']) && $d['method']=='mining.submit' && isset($d['params']) && isset($d['params'][0]) and $d['params'][0]==$this->o[$k]->P['user'])
               $this->o[$k]->t(-$d['id']);
             $this->l('server '.$k.' gets '.$_d);
             socket_write($this->p[$k], $_d);
-          } else $this->k($k, 'lost server.');
-        } else $this->k($k, 'said garbage.');
+          } else $this->k($k, 'lost server');
+        } else $this->k($k, 'said garbage');
       }
     }
   }
@@ -95,13 +95,13 @@ class Stratum {
   private function c($k, $o = 0) {
     if ($this->p[$k]) socket_close($this->p[$k]);
     $this->p[$k] = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
-    if (!($p = $this->o[$k]->c($this->p[$k], $o))) $this->k($k, 'lost pools.');
+    if (!($p = $this->o[$k]->c($this->p[$k], $o))) $this->k($k, 'lost pools');
     else if ($this->o[$k]->s) {
       socket_write($this->p[$k], $this->o[$k]->s[1]);
       socket_write($this->p[$k], '{"id": '.($this->o[$k]->s[0]+1).', "method": "mining.authorize", "params": ["'.$p['user'].'", "'.$p['pass'].'"]}'."\n");
       $this->o[$k]->I = array();
       $this->l($k.' connected to '.$p['url'].':'.$p['port'].' as '.$p['user'].'.');
-    } else $this->k($k, 'miss subscribe.');
+    } else $this->k($k, 'miss subscribe');
   }
 
   private function k($k, $m) {
@@ -129,7 +129,7 @@ class Stratum {
                 'pool'=>$o->P,
                 'pending'=>$o->I,
                 'diff'=>$o->F,
-                '5min avg'=>$o->h()
+                '2min avg'=>$o->h()
               );
             else $d['result'][] = $k.' is zombie.';
           }
@@ -160,20 +160,17 @@ class U {
   public $Ht = array(0);
   public $F = 0;
   public $P = array(
-    'url'=>0,
-    'id'=>'solo.ckpool.org',
-    'port'=>3333,
-    'user'=>'1CArLeSkmBT1BkkcADtNrHoLSgHVhBcesk',
-    'pass'=>'x'
+    'id' => 0,
+    'url'  => 'sha256.eu.nicehash.com',
+    'port'=> 3334,
+    'user'=> '1DiS2bVRR35jwxmbSMmtqkobRmTiD9Tevv.0',
+    'pass'=> 'x'
   );
-  private $p = NULL;
 
   public function c($p, $o = 0) {
     if (is_null($this->u)) return FALSE;
     $m = new M();
-    $this->p = $m->q('SELECT pools.id, pools.url, pools.port, pools.user, pools.pass FROM pools JOIN workers ON workers.worker = "%s" WHERE pools.worker_id = workers.id;', $this->u);
-    if (!$this->p) return FALSE;
-    foreach($this->p as $_p)
+    foreach($m->q('SELECT pools.id, pools.url, pools.port, pools.user, pools.pass FROM pools JOIN workers ON workers.worker = "%s" WHERE pools.worker_id = workers.id;', $this->u) as $_p)
       if ($o && $_p['id']!=$o) continue;
       else if (@socket_connect($p, $_p['url'], $_p['port'])) return $this->P = $_p;
     if (@socket_connect($p, $this->P['url'], $this->P['port'])) return $this->P;
