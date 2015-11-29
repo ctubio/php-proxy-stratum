@@ -6,10 +6,11 @@ socket_set_option($x, SOL_SOCKET, SO_RCVTIMEO, array('sec' => 5, 'usec' => 50000
 socket_connect($x, 0, 8033);
 socket_write($x, '{"method":"wtfisconnected"}'."\n");
 $wtf = trim(@socket_read($x, 2048, PHP_NORMAL_READ));
-socket_write($x, '{"method":"switchpool","params":["analpaper.3", 0]}'."\n");
-var_dump(@socket_read($x, 2048, PHP_NORMAL_READ));
+#socket_write($x, '{"method":"switchpool","params":["analpaper.3", 0]}'."\n");
+#var_dump(@socket_read($x, 2048, PHP_NORMAL_READ));
 socket_close($x);
 print '<h1>wtfisconnected</h1>';
+print '<script type="text/javascript">setTimeout(function(){location.reload();},7000);</script>';
 print '<pre>';
-var_dump(json_decode($wtf));
+print json_encode(json_decode($wtf), JSON_PRETTY_PRINT);
 print '</pre>';
