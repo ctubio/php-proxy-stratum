@@ -1,3 +1,4 @@
+#!/usr/bin/php
 <?php
 class Stratum {
   private $s = array();
