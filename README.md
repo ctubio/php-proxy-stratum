@@ -53,6 +53,8 @@ Enjoy:exclamation:
 #### Very special thanks to:
 - https://github.com/slush0
 - https://github.com/ckolivas/cgminer
+- https://www.btcguild.com/new_protocol.php
+- https://en.bitcoin.it/wiki/Stratum_mining_protocol
 
 
 ###### Donations
