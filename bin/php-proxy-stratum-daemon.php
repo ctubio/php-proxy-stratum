@@ -116,7 +116,7 @@ class Stratum {
           } else $this->k($k, $s, 'lost before server');
         });
       } else $this->k($k, $s, 'miss subscribe');
-    }, function() use ($k, $n) {
+    }, function() use ($l, $k, $n) {
       if ($n) $this->c($l, $k, $n);
       else $this->k($k, $this->s[$k], 'lost pools');
     });
@@ -183,9 +183,9 @@ class U {
   public $F = 0;
   public $P = array(
     'id' => 0,
-    'url'  => 'sha256.eu.nicehash.com',
-    'port'=> 3334,
-    'user'=> '1DiS2bVRR35jwxmbSMmtqkobRmTiD9Tevv.0',
+    'url'  => 'stratum.kano.is',
+    'port'=> 3333,
+    'user'=> 'analpaper.0',
     'pass'=> 'x'
   );
 
