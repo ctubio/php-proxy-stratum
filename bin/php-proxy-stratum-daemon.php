@@ -16,7 +16,8 @@ class Stratum {
         $this->s[] = $c;
         $this->l('connected, total: '.($k+1).'.');
         $c->on('close', function ($c) {
-          $this->k(array_search($c, $this->s), 'gone');
+          if (($k = array_search($c, $this->s))!==FALSE)
+            $this->k($k, $c, 'gone');
         });
         $c->on('data', function ($d, $c) use ($l) {
           $this->x($d, $c, $l);
@@ -40,9 +41,13 @@ class Stratum {
   }
 
   private function x($_d, $_r, $l) {
-    $k = array_search($_r, $this->s);
+    if (($k = array_search($_r, $this->s))===FALSE) {
+      $_r->close();
+      $this->l('already kicked.');
+      return;
+    }
     $_d = $this->o[$k]->d($_d);
-    if ($_d === FALSE || !($d = json_decode($_d, TRUE))) $this->k($k, 'lost');
+    if ($_d === FALSE || !($d = json_decode($_d, TRUE))) $this->k($k, $_r, 'lost');
     else {
       $this->l(((int)$k).' says: '.$_d);
       if (isset($d['method'])) {
@@ -59,14 +64,14 @@ class Stratum {
           if (isset($d['params']) && isset($d['params'][0]) && $d['params'][0]) {
             $this->o[$k]->u = $d['params'][0];
             $this->c($l, $k);
-          } else $this->k($k, 'unkown');
+          } else $this->k($k, $_r, 'unkown');
         } else if ($this->p[$k]) {
           if(isset($d['method']) && $d['method']=='mining.submit' && isset($d['params']) && isset($d['params'][0]) and $d['params'][0]==$this->o[$k]->P['user'])
             $this->o[$k]->t(-$d['id']);
           $this->l('server '.$k.' gets '.$_d);
           $this->p[$k]->write($_d);
-        } else $this->k($k, 'lost server');
-      } else $this->k($k, 'said garbage');
+        } else $this->k($k, $_r, 'lost server');
+      } else $this->k($k, $_r, 'said garbage');
     }
   }
 
@@ -86,13 +91,14 @@ class Stratum {
         $this->o[$k]->I = array();
         $this->l(((int)$k).' connected to '.$this->o[$k]->P['url'].':'.$this->o[$k]->P['port'].' as '.$this->o[$k]->P['user'].'.');
         $s->on('close', function ($s) {
-          $this->k(array_search($s, $this->p), 'server gone');
+          if (($k = array_search($s, $this->p))!==FALSE)
+            $this->k($k, $s, 'server gone');
         });
         $s->on('data', function ($__d, $s) {
           $k = array_search($s, $this->p);
           if (isset($this->s[$k])) {
             foreach(array_filter(explode(PHP_EOL, $__d)) as $_d) {
-              if ($_d === FALSE || !($d = json_decode($_d, TRUE))) $this->k($k, 'server lost');
+              if ($_d === FALSE || !($d = json_decode($_d, TRUE))) $this->k($k, $s, 'server lost');
               if (isset($d['id']) && $d['id'] && $d['id'] == $this->o[$k]->s[0]) {
                 if (isset($d['result']) && isset($d['result'][1]) && $d['result'][1]) {
                   $this->l(((int)$k).' gets extranonce ["'.$d['result'][1].'", '.$d['result'][2].'].');
@@ -107,16 +113,20 @@ class Stratum {
               if (isset($d['result']) && $d['result']===TRUE && isset($d['id']) && $d['id'])
                 $this->o[$k]->t($d['id']);
             }
-          } else $this->k($k, 'lost before server');
+          } else $this->k($k, $s, 'lost before server');
         });
-      } else $this->k($k, 'miss subscribe');
+      } else $this->k($k, $s, 'miss subscribe');
     }, function() use ($k, $n) {
       if ($n) $this->c($l, $k, $n);
-      else $this->k($k, 'lost pools');
+      else $this->k($k, $this->s[$k], 'lost pools');
     });
   }
 
-  private function k($k, $m) {
+  private function k($k, $x, $m) {
+    if ($k===FALSE || !in_array($x, array($this->s[$k], $this->p[$k]), TRUE)) {
+      $this->l(($k===FALSE?'?':(int)$k).' does not compute.');
+      return;
+    }
     unset($this->s[$k], $this->p[$k], $this->o[$k]);
     $this->s = array_values($this->s);
     $this->p = array_values($this->p);
