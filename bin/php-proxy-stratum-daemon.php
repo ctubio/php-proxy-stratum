@@ -15,13 +15,16 @@ class Stratum {
         $this->o[] = new U();
         $this->s[] = $c;
         $this->l('connected, total: '.($k+1).'.');
-      } else $this->l('ignored, too many.');
-      $c->on('close', function ($c) {
-        $this->k(array_search($c, $this->s), 'gone');
-      });
-      $c->on('data', function ($d, $c) use ($l) {
-        $this->x($d, $c, $l);
-      });
+        $c->on('close', function ($c) {
+          $this->k(array_search($c, $this->s), 'gone');
+        });
+        $c->on('data', function ($d, $c) use ($l) {
+          $this->x($d, $c, $l);
+        });
+      } else {
+        $c->close();
+        $this->l('ignored, too many.');
+      }
     });
     $s->listen(3333, 0);
     $w = new React\Socket\Server($l);
