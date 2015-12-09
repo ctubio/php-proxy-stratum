@@ -1,0 +1,10 @@
+{
+  "name": "ctubio/php-proxy-stratum",
+  "description": "php-proxy-stratum",
+  "license": "MIT",
+  "require": {
+    "php": "~5.4",
+    "react/socket": "~0.4",
+    "react/socket-client": "~0.4"
+  }
+}
