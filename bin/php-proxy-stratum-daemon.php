@@ -95,8 +95,7 @@ class Stratum {
             $this->k($k, $s, 'server gone');
         });
         $s->on('data', function ($__d, $s) {
-          $k = array_search($s, $this->p);
-          if (isset($this->s[$k])) {
+          if (($k = array_search($s, $this->p))!==FALSE && isset($this->s[$k])) {
             foreach(array_filter(explode(PHP_EOL, $__d)) as $_d) {
               if ($_d === FALSE || !($d = json_decode($_d, TRUE))) $this->k($k, $s, 'server lost');
               if (isset($d['id']) && $d['id'] && $d['id'] == $this->o[$k]->s[0]) {
