@@ -9,15 +9,14 @@ class Stratum {
     $s = new React\Socket\Server($l);
     $s->on('connection', function ($c) use ($l) {
       if (($o = count($this->o))<9999) {
-        $c->l = $l;
         $c->p = NULL;
         $c->u = new U();
         $this->o[$c->k=(int)$c->stream] = $c;
         $c->on('close', function ($c) {
           $this->k($c->k, $c, 'gone');
         });
-        $c->on('data', function ($d, $c) {
-          $this->x($d, $c);
+        $c->on('data', function ($d, $c) use ($l) {
+          $this->x($d, $c, $l);
         });
         $this->l('connected, total: '.($o+1).'.');
       } else {
@@ -28,10 +27,9 @@ class Stratum {
     $s->listen(3333, 0);
     $w = new React\Socket\Server($l);
     $w->on('connection', function ($c) use ($l) {
-      $c->l = $l;
-      $c->on('data', function ($d, $c) {
+      $c->on('data', function ($d, $c) use ($l) {
         if ($c->getRemoteAddress()=='127.0.0.1')
-          $this->h($d, $c);
+          $this->h($d, $c, $l);
         $c->end();
       });
     });
@@ -40,7 +38,7 @@ class Stratum {
     $l->run();
   }
 
-  private function x($_d, $c) {
+  private function x($_d, $c, $l) {
     $_d = $c->u->d($_d);
     if ($_d === FALSE || !($d = json_decode($_d, TRUE))) $this->k($c->k, $c, 'lost');
     else {
@@ -58,7 +56,7 @@ class Stratum {
           $c->write('{"error":null,"id":'.$d['id'].',"result":true}'."\n");
           if (isset($d['params']) && isset($d['params'][0]) && $d['params'][0]) {
             $c->u->u = $d['params'][0];
-            $this->c($c);
+            $this->c($l, $c);
           } else $this->k($c->k, $c, 'unkown');
         } else if ($c->p) {
           if(isset($d['method']) && $d['method']=='mining.submit' && isset($d['params']) && isset($d['params'][0]) and $d['params'][0]==$c->u->P['user'])
@@ -70,14 +68,14 @@ class Stratum {
     }
   }
 
-  private function c($c, $o = 0) {
+  private function c($l, $c, $o = 0) {
     if ($c->p) $c->p->end();
     $c->p = NULL;
     $a = $c->u->c();
     $c->u->P = $a[$o];
     $n = isset($a[$o+1]) ? $o+1 : 0;
     $x = new React\Dns\Resolver\Factory();
-    $_c = new React\SocketClient\Connector($c->l, $x->createCached('8.8.8.8', $c->l));
+    $_c = new React\SocketClient\Connector($l, $x->createCached('8.8.8.8', $l));
     $_c->create($c->u->P['url'], $c->u->P['port'])->then(function ($s) use ($c) {
       $c->p = $s;
       if ($c->u->s) {
@@ -109,8 +107,8 @@ class Stratum {
           } else $this->k($c->k, $c, 'lost before server');
         });
       } else $this->k($c->k, $c, 'miss subscribe');
-    }, function() use ($c, $n) {
-      if ($n) $this->c($c, $n);
+    }, function() use ($l, $c, $n) {
+      if ($n) $this->c($l, $c, $n);
       else $this->k($c->k, $c, 'lost pools');
     });
   }
@@ -126,7 +124,7 @@ class Stratum {
     }
   }
 
-  private function h($d, $c) {
+  private function h($d, $c, $l) {
     $r = array('result'=>NULL);
     if (($d = json_decode($d, TRUE)) && isset($d['method']))
       switch($d['method']) {
@@ -151,7 +149,7 @@ class Stratum {
         case 'switchpool':
           foreach($this->o as $o) {
             if (is_null($o->u->u) || $o->u->u!=$d['params'][0]) continue;
-            $this->c($o, $d['params'][1]);
+            $this->c($l, $o, $d['params'][1]);
           }
           break;
       }
