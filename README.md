@@ -1,11 +1,20 @@
 # php-proxy-stratum
 ReactPHP **stratum+tcp** proxy between miners and pools with database and minimal web interface.
+
+Basically it may be run with the following command: 
 ```
 $ php bin/php-proxy-stratum-daemon.php
 ```
-And feel free to connect your miners to your port ```3333```, also you can configure your webserver with ```pub/``` as the document root and ```php-proxy-stratum.php``` as the index file.
+Or use the init script:
+```
+ $ sudo cp dist/init.sh /etc/init.d/php-proxy-stratum
+ $ sudo chmod +x /etc/init.d/php-proxy-stratum
+ $ sudo update-rc.d php-proxy-stratum defaults
+ $ sudo update-rc.d php-proxy-stratum enable
+```
+And feel free to connect your miners at port ```3333```, also you can configure your webserver with ```pub/``` as the document root and ```php-proxy-stratum.php``` as the index file.
 
-Currently the web interface have auto refresh and a snapshot may look like (yes, is just json output):
+Currently the web interface features auto refresh and pool switch; a snapshot may look like (yes, is just json output):
 ```
 2015-12-10 17:32:52
 wtfisconnected
