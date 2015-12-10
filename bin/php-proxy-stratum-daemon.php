@@ -12,7 +12,7 @@ class Stratum {
         $c->u = new U();
         $l->o[$c->k=(int)$c->stream] = $c;
         $c->on('close', function ($c) use ($l) {
-          $this->k($l, $c->k, $c, 'gone');
+          $this->k($l, $c, 'gone');
         });
         $c->on('data', function ($d, $c) use ($l) {
           $this->x($d, $c, $l);
@@ -40,7 +40,7 @@ class Stratum {
   private function x($__d, $c, $l) {
     foreach(explode(PHP_EOL, $c->u->d(trim($__d))) as $_d) {
       $this->e($c->k.' says: '.$_d);
-      if (!($d = json_decode($_d, TRUE))) $this->k($l, $c->k, $c, 'lost');
+      if (!($d = json_decode($_d, TRUE))) $this->k($l, $c, 'lost');
       else if (isset($d['method'])) {
         if ($d['method'] == 'mining.subscribe') {
           $this->e($c->k.' gets subscription '.$d['id'].'.');
@@ -55,14 +55,14 @@ class Stratum {
           if (isset($d['params']) && isset($d['params'][0]) && $d['params'][0]) {
             $c->u->u = $d['params'][0];
             $this->c($l, $c);
-          } else $this->k($l, $c->k, $c, 'unkown');
+          } else $this->k($l, $c, 'unkown');
         } else if ($c->p) {
           if(isset($d['method']) && $d['method']=='mining.submit' && isset($d['params']) && isset($d['params'][0]) and $d['params'][0]==$c->u->P['user'])
             $c->u->t(-$d['id']);
           $this->e('server '.$c->k.' gets '.$_d);
           $c->p->write($_d."\n");
         } else if (!isset($c->_p)) $this->c($l, $c);
-      } else $this->k($l, $c->k, $c, 'said garbage');
+      } else $this->k($l, $c, 'said garbage');
     }
   }
 
@@ -76,10 +76,7 @@ class Stratum {
       $x = new React\Dns\Resolver\Factory();
       $_c = new React\SocketClient\Connector($l, $x->createCached('8.8.8.8', $l));
       $_c->create($c->u->P['url'], $c->u->P['port'])->then(function ($s) use ($l, $c) {
-        if (!$c->isWritable()) {
-          $c->_p = -1;
-          $s->close();
-        } else {
+        if ($c->isWritable()) {
           $c->p = $s;
           unset($c->_p);
           if ($c->u->s) {
@@ -92,14 +89,14 @@ class Stratum {
               else {
                 $i = $c->_p;
                 unset($c->_p);
-                if ($i>0) $this->c($l, $c, $i);
+                if ($i>=0) $this->c($l, $c, $i);
               }
             });
             $s->on('data', function ($__d, $s) use ($l, $c) {
               if (isset($c) && $c) {
                 if ($c->isWritable()) {
                   foreach(explode(PHP_EOL, trim($__d)) as $_d) {
-                    if (!($d = json_decode($_d, TRUE))) $this->k($l, $c->k, $c, 'server lost');
+                    if (!($d = json_decode($_d, TRUE))) $this->k($l, $c, 'server lost');
                     if (isset($d['id']) && $d['id'] && $d['id'] == $c->u->s[0]) {
                       if (isset($d['result']) && isset($d['result'][1]) && $d['result'][1]) {
                         $this->e($c->k.' gets extranonce ["'.$d['result'][1].'", '.$d['result'][2].'].');
@@ -117,26 +114,30 @@ class Stratum {
                 } else {
                   $c->_p = -1;
                   $s->close();
+                  $this->e($c->k.' not writable, but got data.');
                 }
-              } else $this->k($l, $c->k, $c, 'lost before server');
+              } else $this->k($l, $c, 'lost before server');
             });
-          } else $this->k($l, $c->k, $c, 'miss subscribe');
+          } else $this->k($l, $c, 'miss subscribe');
+        } else {
+          $c->_p = -1;
+          $s->close();
+          $this->e($c->k.' not writable, but connecting.');
         }
       }, function() use ($l, $c, $n) {
         if ($n) $this->c($l, $c, $n);
-        else $this->k($l, $c->k, $c, 'lost pools');
+        else $this->k($l, $c, 'lost pools');
       });
-    }
+    } else $this->e($c->k.' not writable, ignored.');
   }
 
-  private function k($l, $k, $c, $m) {
-    if ($k===FALSE || !isset($l->o[$k]) || $c!==$l->o[$k])
-      $this->e(($k===FALSE?'?':$k).' '.(!isset($l->o[$k])?' does not':NULL).' compute (but '.$m.').');
+  private function k($l, $c, $m) {
+    if (!isset($l->o[$c->k])) $this->e($c->k.' does not compute (but '.$m.').');
     else {
       $c->_p = -1;
       if ($c->p) $c->p->close();
       $c->close();
-      unset($l->o[$k], $c);
+      unset($l->o[$k=$c->k], $c);
       $this->e($k.' '.$m.', killed.');
     }
   }
@@ -147,6 +148,9 @@ class Stratum {
     if (($d = json_decode($d, TRUE)) && isset($d['method']))
       switch($d['method']) {
         case 'wtfisconnected':
+          $r['pid'] = getmypid();
+          $r['mem'] = memory_get_usage(true);
+          $r['mem'] = @round($r['mem']/pow(1024,($i=floor(log($r['mem'],1024)))),2).strtr($i, array('b','kb','mb','gb'));
           foreach($l->o as $o) {
             if (!$o) continue;
             if (!is_null($o->u->u))
