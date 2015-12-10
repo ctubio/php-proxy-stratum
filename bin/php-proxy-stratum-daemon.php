@@ -137,7 +137,7 @@ class Stratum {
       $c->_p = -1;
       if ($c->p) $c->p->close();
       $c->close();
-      unset($this->o[$k]);
+      unset($this->o[$k], $c);
       $this->l($k.' '.$m.', killed.');
     }
   }
