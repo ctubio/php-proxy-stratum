@@ -32,7 +32,7 @@ class Stratum {
       $c->on('data', function ($d, $c) {
         if ($c->getRemoteAddress()=='127.0.0.1')
           $this->h($d, $c);
-        // $c->close();
+        $c->end();
       });
     });
     $w->listen(8033, 0);
