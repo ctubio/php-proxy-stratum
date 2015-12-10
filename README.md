@@ -11,6 +11,7 @@ Or use the init script:
  $ sudo chmod +x /etc/init.d/php-proxy-stratum
  $ sudo update-rc.d php-proxy-stratum defaults
  $ sudo update-rc.d php-proxy-stratum enable
+ $ sudo service php-proxy-stratum start
 ```
 And feel free to connect your miners at port ```3333```, also you can configure your webserver with ```pub/``` as the document root and ```php-proxy-stratum.php``` as the index file.
 
