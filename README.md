@@ -1,5 +1,5 @@
 # php-proxy-stratum
-Transparent **stratum+tcp** proxy between miners and pools, with minimal web interface.
+ReactPHP **stratum+tcp** proxy between miners and pools with database and minimal web interface.
 ```
 $ php bin/php-proxy-stratum-daemon.php
 ```
@@ -7,42 +7,44 @@ And feel free to connect your miners to your port ```3333```, also you can confi
 
 Currently the web interface have auto refresh and a snapshot may look like (yes, is just json output):
 ```
-2015-11-29 20:40:01
+2015-12-10 17:32:52
 wtfisconnected
 
 {
     "result": [
         {
+            "key": 27,
+            "user": "analpaper.2",
+            "version": "cgminer\/4.8.0",
+            "since": "2015-12-10T16:56:22+0000",
+            "last": "2015-12-10T17:32:46+0000",
+            "pool": {
+                "id": 0,
+                "url": "stratum.kano.is",
+                "port": 3333,
+                "user": "analpaper.0",
+                "pass": "x"
+            },
+            "pending": [],
+            "diff": 3801,
+            "2min avg": "5,71 TH\/s"
+        },
+        {
+            "key": 35,
             "user": "analpaper.3",
             "version": "cgminer\/4.8.0",
-            "since": "2015-11-29T20:37:45+0000",
-            "last": "2015-11-29T20:39:55+0000",
+            "since": "2015-12-10T16:56:24+0000",
+            "last": "2015-12-10T17:32:47+0000",
             "pool": {
                 "id": "1",
-                "url": "eu.stratum.bitcoin.cz",
+                "url": "stratum.kano.is",
                 "port": "3333",
                 "user": "analpaper.0",
                 "pass": "x"
             },
             "pending": [],
-            "diff": 624,
-            "2min avg": "1,21 TH\/s"
-        },
-        {
-            "user": "analpaper.2",
-            "version": "cgminer\/4.8.0",
-            "since": "2015-11-29T20:37:43+0000",
-            "last": "2015-11-29T20:40:00+0000",
-            "pool": {
-                "id": 0,
-                "url": "sha256.eu.nicehash.com",
-                "port": 3334,
-                "user": "1DiS2bVRR35jwxmbSMmtqkobRmTiD9Tevv.0",
-                "pass": "x"
-            },
-            "pending": [],
-            "diff": 1024,
-            "2min avg": "4,91 TH\/s"
+            "diff": 1042,
+            "2min avg": "1,23 TH\/s"
         }
     ]
 }
@@ -51,9 +53,10 @@ wtfisconnected
 Enjoy:exclamation:
 
 #### Very special thanks to:
+- https://github.com/reactphp
 - https://github.com/slush0
 - https://github.com/ckolivas/cgminer
-- https://www.btcguild.com/new_protocol.php
+- ~~https://www.btcguild.com/new_protocol.php~~ http://archive.is/CH9a0
 - https://en.bitcoin.it/wiki/Stratum_mining_protocol
 
 
