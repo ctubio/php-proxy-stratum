@@ -1,8 +1,6 @@
 #!/usr/bin/php
 <?php
 class Stratum {
-  private $s = array();
-  private $p = array();
   private $o = array();
 
   public function __construct() {
@@ -10,18 +8,18 @@ class Stratum {
     $l = React\EventLoop\Factory::create();
     $s = new React\Socket\Server($l);
     $s->on('connection', function ($c) use ($l) {
-      if (($k = count($this->s))<9999) {
-        $this->p[] = NULL;
-        $this->o[] = new U();
-        $this->s[] = $c;
-        $this->l('connected, total: '.($k+1).'.');
+      if (($o = count($this->o))<9999) {
+        $c->l = $l;
+        $c->p = NULL;
+        $c->u = new U();
+        $this->o[$c->k=(int)$c->stream] = $c;
         $c->on('close', function ($c) {
-          if (($k = array_search($c, $this->s))!==FALSE)
-            $this->k($k, $c, 'gone');
+          $this->k($c->k, $c, 'gone');
         });
-        $c->on('data', function ($d, $c) use ($l) {
-          $this->x($d, $c, $l);
+        $c->on('data', function ($d, $c) {
+          $this->x($d, $c);
         });
+        $this->l('connected, total: '.($o+1).'.');
       } else {
         $c->close();
         $this->l('ignored, too many.');
@@ -30,9 +28,11 @@ class Stratum {
     $s->listen(3333, 0);
     $w = new React\Socket\Server($l);
     $w->on('connection', function ($c) use ($l) {
-      $c->on('data', function ($d, $c) use ($l) {
+      $c->l = $l;
+      $c->on('data', function ($d, $c) {
         if ($c->getRemoteAddress()=='127.0.0.1')
-          $this->h($d, $c, $l);
+          $this->h($d, $c);
+        // $c->close();
       });
     });
     $w->listen(8033, 0);
@@ -40,129 +40,122 @@ class Stratum {
     $l->run();
   }
 
-  private function x($_d, $_r, $l) {
-    if (($k = array_search($_r, $this->s))===FALSE) {
-      $_r->close();
-      $this->l('already kicked.');
-      return;
-    }
-    $_d = $this->o[$k]->d($_d);
-    if ($_d === FALSE || !($d = json_decode($_d, TRUE))) $this->k($k, $_r, 'lost');
+  private function x($_d, $c) {
+    $_d = $c->u->d($_d);
+    if ($_d === FALSE || !($d = json_decode($_d, TRUE))) $this->k($c->k, $c, 'lost');
     else {
-      $this->l(((int)$k).' says: '.$_d);
+      $this->l($c->k.' says: '.$_d);
       if (isset($d['method'])) {
         if ($d['method'] == 'mining.subscribe') {
-          $this->l(((int)$k).' gets subscription '.$d['id'].'.');
-          $this->s[$k]->write('{"id":'.$d['id'].',"result":[[["mining.set_difficulty","1"],["mining.notify","1"]],"00",4],"error":null}'."\n");
-          if (!$this->p[$k]) {
-            $this->o[$k]->v = (isset($d['params']) && isset($d['params'][0]) && $d['params'][0]) ? $d['params'][0] : 'unknown';
-            $this->o[$k]->s = array($d['id'], $_d);
+          $this->l($c->k.' gets subscription '.$d['id'].'.');
+          $c->write('{"id":'.$d['id'].',"result":[[["mining.set_difficulty","1"],["mining.notify","1"]],"00",4],"error":null}'."\n");
+          if (!$c->p) {
+            $c->u->v = (isset($d['params']) && isset($d['params'][0]) && $d['params'][0]) ? $d['params'][0] : 'unknown';
+            $c->u->s = array($d['id'], $_d);
           }
         } else if ($d['method'] == 'mining.authorize') {
-          $this->l(((int)$k).' gets authorization '.$d['id'].'.');
-          $this->s[$k]->write('{"error":null,"id":'.$d['id'].',"result":true}'."\n");
+          $this->l($c->k.' gets authorization '.$d['id'].'.');
+          $c->write('{"error":null,"id":'.$d['id'].',"result":true}'."\n");
           if (isset($d['params']) && isset($d['params'][0]) && $d['params'][0]) {
-            $this->o[$k]->u = $d['params'][0];
-            $this->c($l, $k);
-          } else $this->k($k, $_r, 'unkown');
-        } else if ($this->p[$k]) {
-          if(isset($d['method']) && $d['method']=='mining.submit' && isset($d['params']) && isset($d['params'][0]) and $d['params'][0]==$this->o[$k]->P['user'])
-            $this->o[$k]->t(-$d['id']);
-          $this->l('server '.$k.' gets '.$_d);
-          $this->p[$k]->write($_d);
-        } else $this->k($k, $_r, 'lost server');
-      } else $this->k($k, $_r, 'said garbage');
+            $c->u->u = $d['params'][0];
+            $this->c($c);
+          } else $this->k($c->k, $c, 'unkown');
+        } else if ($c->p) {
+          if(isset($d['method']) && $d['method']=='mining.submit' && isset($d['params']) && isset($d['params'][0]) and $d['params'][0]==$c->u->P['user'])
+            $c->u->t(-$d['id']);
+          $this->l('server '.$c->k.' gets '.$_d);
+          $c->p->write($_d);
+        } else $this->k($c->k, $c, 'lost server');
+      } else $this->k($c->k, $c, 'said garbage');
     }
   }
 
-  private function c($l, $k, $o = 0) {
-    if ($this->p[$k]) $this->p[$k]->end();
-    $this->p[$k] = NULL;
-    $a = $this->o[$k]->c();
-    $this->o[$k]->P = $a[$o];
+  private function c($c, $o = 0) {
+    if ($c->p) $c->p->end();
+    $c->p = NULL;
+    $a = $c->u->c();
+    $c->u->P = $a[$o];
     $n = isset($a[$o+1]) ? $o+1 : 0;
     $x = new React\Dns\Resolver\Factory();
-    $c = new React\SocketClient\Connector($l, $x->createCached('8.8.8.8', $l));
-    $c->create($this->o[$k]->P['url'], $this->o[$k]->P['port'])->then(function ($s) use ($k) {
-      $this->p[$k] = $s;
-      if (isset($this->s[$k]) && $this->o[$k]->s) {
-        $this->p[$k]->write($this->o[$k]->s[1]);
-        $this->p[$k]->write('{"id": '.($this->o[$k]->s[0]+1).', "method": "mining.authorize", "params": ["'.$this->o[$k]->P['user'].'", "'.$this->o[$k]->P['pass'].'"]}'."\n");
-        $this->o[$k]->I = array();
-        $this->l(((int)$k).' connected to '.$this->o[$k]->P['url'].':'.$this->o[$k]->P['port'].' as '.$this->o[$k]->P['user'].'.');
-        $s->on('close', function ($s) {
-          if (($k = array_search($s, $this->p))!==FALSE)
-            $this->k($k, $s, 'server gone');
+    $_c = new React\SocketClient\Connector($c->l, $x->createCached('8.8.8.8', $c->l));
+    $_c->create($c->u->P['url'], $c->u->P['port'])->then(function ($s) use ($c) {
+      $c->p = $s;
+      if ($c->u->s) {
+        $c->p->write($c->u->s[1]);
+        $c->p->write('{"id": '.($c->u->s[0]+1).', "method": "mining.authorize", "params": ["'.$c->u->P['user'].'", "'.$c->u->P['pass'].'"]}'."\n");
+        $c->u->I = array();
+        $this->l($c->k.' connected to '.$c->u->P['url'].':'.$c->u->P['port'].' as '.$c->u->P['user'].'.');
+        $s->on('close', function ($s) use ($c) {
+            $this->k($c->k, $c, 'server gone');
         });
-        $s->on('data', function ($__d, $s) {
-          if (($k = array_search($s, $this->p))!==FALSE && isset($this->s[$k])) {
+        $s->on('data', function ($__d, $s) use ($c) {
+          if (isset($c) && $c) {
             foreach(array_filter(explode(PHP_EOL, $__d)) as $_d) {
-              if ($_d === FALSE || !($d = json_decode($_d, TRUE))) $this->k($k, $s, 'server lost');
-              if (isset($d['id']) && $d['id'] && $d['id'] == $this->o[$k]->s[0]) {
+              if ($_d === FALSE || !($d = json_decode($_d, TRUE))) $this->k($c->k, $c, 'server lost');
+              if (isset($d['id']) && $d['id'] && $d['id'] == $c->u->s[0]) {
                 if (isset($d['result']) && isset($d['result'][1]) && $d['result'][1]) {
-                  $this->l(((int)$k).' gets extranonce ["'.$d['result'][1].'", '.$d['result'][2].'].');
-                  $this->s[$k]->write('{"params":["'.$d['result'][1].'",'.$d['result'][2].'],"method":"mining.set_extranonce","id":null}'."\n");
+                  $this->l($c->k.' gets extranonce ["'.$d['result'][1].'", '.$d['result'][2].'].');
+                  $c->write('{"params":["'.$d['result'][1].'",'.$d['result'][2].'],"method":"mining.set_extranonce","id":null}'."\n");
                 }
               } else if(!isset($d['method']) || $d['method']!='client.show_message') {
-                $this->l(((int)$k).' gets: '.$_d);
-                $this->s[$k]->write($_d."\n");
+                $this->l($c->k.' gets: '.$_d);
+                $c->write($_d."\n");
               }
               if (isset($d['method']) && $d['method']=='mining.set_difficulty' && isset($d['params']) && isset($d['params'][0]))
-                $this->o[$k]->F = $d['params'][0];
+                $c->u->F = $d['params'][0];
               if (isset($d['result']) && $d['result']===TRUE && isset($d['id']) && $d['id'])
-                $this->o[$k]->t($d['id']);
+                $c->u->t($d['id']);
             }
-          } else $this->k($k, $s, 'lost before server');
+          } else $this->k($c->k, $c, 'lost before server');
         });
-      } else $this->k($k, $s, 'miss subscribe');
-    }, function() use ($l, $k, $n) {
-      if ($n) $this->c($l, $k, $n);
-      else $this->k($k, $this->s[$k], 'lost pools');
+      } else $this->k($c->k, $c, 'miss subscribe');
+    }, function() use ($c, $n) {
+      if ($n) $this->c($c, $n);
+      else $this->k($c->k, $c, 'lost pools');
     });
   }
 
-  private function k($k, $x, $m) {
-    if ($k===FALSE || !in_array($x, array($this->s[$k], $this->p[$k]), TRUE)) {
-      $this->l(($k===FALSE?'?':(int)$k).' does not compute.');
-      return;
+  private function k($k, $c, $m) {
+    if ($k===FALSE || !isset($this->o[$k]) || $c!==$this->o[$k])
+      $this->l(($k===FALSE?'?':$k).' '.(!isset($this->o[$k])?' does not':NULL).' compute (but '.$m.').');
+    else {
+      if ($m == 'gone' && $c->p) $c->p->end();
+      else if ($m == 'server gone') $c->close();
+      unset($this->o[$k]);
+      $this->l($k.' '.$m.', killed.');
     }
-    unset($this->s[$k], $this->p[$k], $this->o[$k]);
-    $this->s = array_values($this->s);
-    $this->p = array_values($this->p);
-    $this->o = array_values($this->o);
-    $this->l(((int)$k).' '.$m.', killed.');
   }
 
-  private function h($h, $c, $l) {
-    $this->l('HTTP request '.$h);
-    $d = array('result'=>NULL);
-    if (($h = @json_decode($h, TRUE)) && isset($h['method']))
-      switch($h['method']) {
+  private function h($d, $c) {
+    $r = array('result'=>NULL);
+    if (($d = json_decode($d, TRUE)) && isset($d['method']))
+      switch($d['method']) {
         case 'wtfisconnected':
-          foreach($this->o as $k => $o) {
+          foreach($this->o as $o) {
             if (!$o) continue;
-            if (!is_null($o->u))
-              $d['result'][] = array(
-                'user'=>$o->u,
-                'version'=>$o->v,
-                'since'=>date(DATE_ISO8601, $o->T),
-                'last'=>date(DATE_ISO8601, $o->L),
-                'pool'=>$o->P,
-                'pending'=>$o->I,
-                'diff'=>$o->F,
-                '2min avg'=>$o->h()
+            if (!is_null($o->u->u))
+              $r['result'][] = array(
+                'key'=>$o->k,
+                'user'=>$o->u->u,
+                'version'=>$o->u->v,
+                'since'=>date(DATE_ISO8601, $o->u->T),
+                'last'=>date(DATE_ISO8601, $o->u->L),
+                'pool'=>$o->u->P,
+                'pending'=>$o->u->I,
+                'diff'=>$o->u->F,
+                '2min avg'=>$o->u->h()
               );
-            else $d['result'][] = $k.' is zombie.';
+            else $r['result'][] = $o->k.' is zombie.';
           }
           break;
         case 'switchpool':
-          foreach($this->o as $k => $o) {
-            if (!$o || is_null($o->u) || $o->u!=$h['params'][0]) continue;
-            $this->c($l, $k, $h['params'][1]);
+          foreach($this->o as $o) {
+            if (is_null($o->u->u) || $o->u->u!=$d['params'][0]) continue;
+            $this->c($o, $d['params'][1]);
           }
           break;
       }
-    $c->write(json_encode($d)."\n");
+    $c->write(json_encode($r)."\n");
   }
 
   private function l($m) { # return;
