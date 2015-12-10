@@ -62,58 +62,63 @@ class Stratum {
             $c->u->t(-$d['id']);
           $this->l('server '.$c->k.' gets '.$_d);
           $c->p->write($_d."\n");
-        } else $this->k($c->k, $c, 'lost server');
+        } else if (!isset($c->_p)) $this->c($l, $c);
       } else $this->k($c->k, $c, 'said garbage');
     }
   }
 
   private function c($l, $c, $o = 0) {
     if ($c->p) {
-      $c->_p = TRUE;
+      $c->_p = $o;
       $c->p->close();
-    }
-    $c->p = NULL;
-    $a = $c->u->c();
-    $c->u->P = $a[$o];
-    $n = isset($a[$o+1]) ? $o+1 : 0;
-    $x = new React\Dns\Resolver\Factory();
-    $_c = new React\SocketClient\Connector($l, $x->createCached('8.8.8.8', $l));
-    $_c->create($c->u->P['url'], $c->u->P['port'])->then(function ($s) use ($c) {
-      $c->p = $s;
-      if ($c->u->s) {
-        $c->p->write($c->u->s[1]);
-        $c->p->write('{"id": '.($c->u->s[0]+1).', "method": "mining.authorize", "params": ["'.$c->u->P['user'].'", "'.$c->u->P['pass'].'"]}'."\n");
-        $c->u->I = array();
-        $this->l($c->k.' connected to '.$c->u->P['url'].':'.$c->u->P['port'].' as '.$c->u->P['user'].'.');
-        $s->on('close', function ($s) use ($c) {
-          if (!isset($c->_p)) $this->k($c->k, $c, 'server gone');
-          else unset($c->_p);
-        });
-        $s->on('data', function ($__d, $s) use ($c) {
-          if (isset($c) && $c) {
-            foreach(explode(PHP_EOL, trim($__d)) as $_d) {
-              if (!($d = json_decode($_d, TRUE))) $this->k($c->k, $c, 'server lost');
-              if (isset($d['id']) && $d['id'] && $d['id'] == $c->u->s[0]) {
-                if (isset($d['result']) && isset($d['result'][1]) && $d['result'][1]) {
-                  $this->l($c->k.' gets extranonce ["'.$d['result'][1].'", '.$d['result'][2].'].');
-                  $c->write('{"params":["'.$d['result'][1].'",'.$d['result'][2].'],"method":"mining.set_extranonce","id":null}'."\n");
-                }
-              } else if(!isset($d['method']) || $d['method']!='client.show_message') {
-                $this->l($c->k.' gets: '.$_d);
-                $c->write($_d."\n");
-              }
-              if (isset($d['method']) && $d['method']=='mining.set_difficulty' && isset($d['params']) && isset($d['params'][0]))
-                $c->u->F = $d['params'][0];
-              if (isset($d['result']) && $d['result']===TRUE && isset($d['id']) && $d['id'])
-                $c->u->t($d['id']);
+    } else {
+      $a = $c->u->c();
+      $c->u->P = $a[$o];
+      $n = isset($a[$o+1]) ? $o+1 : 0;
+      $x = new React\Dns\Resolver\Factory();
+      $_c = new React\SocketClient\Connector($l, $x->createCached('8.8.8.8', $l));
+      $_c->create($c->u->P['url'], $c->u->P['port'])->then(function ($s) use ($l, $c) {
+        $c->p = $s;
+        if ($c->u->s) {
+          $c->p->write($c->u->s[1]);
+          $c->p->write('{"id": '.($c->u->s[0]+1).', "method": "mining.authorize", "params": ["'.$c->u->P['user'].'", "'.$c->u->P['pass'].'"]}'."\n");
+          $c->u->I = array();
+          $this->l($c->k.' connected to '.$c->u->P['url'].':'.$c->u->P['port'].' as '.$c->u->P['user'].'.');
+          $s->on('close', function ($s) use ($l, $c) {
+            if (!isset($c->_p)) $this->c($l, $c);
+            else {
+              $c->p = NULL;
+              $o = $c->_p;
+              unset($c->_p);
+              $this->c($l, $c, $o);
             }
-          } else $this->k($c->k, $c, 'lost before server');
-        });
-      } else $this->k($c->k, $c, 'miss subscribe');
-    }, function() use ($l, $c, $n) {
-      if ($n) $this->c($l, $c, $n);
-      else $this->k($c->k, $c, 'lost pools');
-    });
+          });
+          $s->on('data', function ($__d, $s) use ($c) {
+            if (isset($c) && $c) {
+              foreach(explode(PHP_EOL, trim($__d)) as $_d) {
+                if (!($d = json_decode($_d, TRUE))) $this->k($c->k, $c, 'server lost');
+                if (isset($d['id']) && $d['id'] && $d['id'] == $c->u->s[0]) {
+                  if (isset($d['result']) && isset($d['result'][1]) && $d['result'][1]) {
+                    $this->l($c->k.' gets extranonce ["'.$d['result'][1].'", '.$d['result'][2].'].');
+                    $c->write('{"params":["'.$d['result'][1].'",'.$d['result'][2].'],"method":"mining.set_extranonce","id":null}'."\n");
+                  }
+                } else if(!isset($d['method']) || $d['method']!='client.show_message') {
+                  $this->l($c->k.' gets: '.$_d);
+                  $c->write($_d."\n");
+                }
+                if (isset($d['method']) && $d['method']=='mining.set_difficulty' && isset($d['params']) && isset($d['params'][0]))
+                  $c->u->F = $d['params'][0];
+                if (isset($d['result']) && $d['result']===TRUE && isset($d['id']) && $d['id'])
+                  $c->u->t($d['id']);
+              }
+            } else $this->k($c->k, $c, 'lost before server');
+          });
+        } else $this->k($c->k, $c, 'miss subscribe');
+      }, function() use ($l, $c, $n) {
+        if ($n) $this->c($l, $c, $n);
+        else $this->k($c->k, $c, 'lost pools');
+      });
+    }
   }
 
   private function k($k, $c, $m) {
