@@ -17,7 +17,7 @@ class Stratum {
         $c->on('data', function ($d, $c) use ($l) {
           $this->x($d, $c, $l);
         });
-        $this->e('connected, total: '.($i+1).'.');
+        $this->e($c->k.' connected, total: '.($i+1).'.');
       } else {
         $c->close();
         $this->e('ignored, too many.');
@@ -40,7 +40,7 @@ class Stratum {
   private function x($__d, $c, $l) {
     foreach(explode(PHP_EOL, $c->u->d(trim($__d))) as $_d) {
       $this->e($c->k.' says: '.$_d);
-      if (!($d = json_decode($_d, TRUE))) $this->k($l, $c, 'lost');
+      if (!($d = json_decode($_d, TRUE))) { $this->k($l, $c, 'lost'); break; }
       else if (isset($d['method'])) {
         if ($d['method'] == 'mining.subscribe') {
           $this->e($c->k.' gets subscription '.$d['id'].'.');
@@ -55,14 +55,14 @@ class Stratum {
           if (isset($d['params']) && isset($d['params'][0]) && $d['params'][0]) {
             $c->u->u = $d['params'][0];
             $this->c($l, $c);
-          } else $this->k($l, $c, 'unkown');
+          } else { $this->k($l, $c, 'unkown'); break; }
         } else if ($c->p) {
           if(isset($d['method']) && $d['method']=='mining.submit' && isset($d['params']) && isset($d['params'][0]) and $d['params'][0]==$c->u->P['user'])
             $c->u->t(-$d['id']);
           $this->e('server '.$c->k.' gets '.$_d);
           $c->p->write($_d."\n");
         } else if (!isset($c->_p)) $this->c($l, $c);
-      } else $this->k($l, $c, 'said garbage');
+      } else { $this->k($l, $c, 'said garbage'); break; }
     }
   }
 
@@ -137,7 +137,7 @@ class Stratum {
       $c->_p = -1;
       if ($c->p) $c->p->close();
       $c->close();
-      unset($l->o[$k=$c->k], $c);
+      unset($l->o[$k=$c->k]);
       $this->e($k.' '.$m.', killed.');
     }
   }
