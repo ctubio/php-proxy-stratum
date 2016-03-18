@@ -1,6 +1,10 @@
 # php-proxy-stratum
 ReactPHP **stratum+tcp** proxy between miners and pools with database and minimal web interface.
 
+Used to demostrate how pools steal your hash by renaming worker names and redirecting the hashrate.
+
+Used² to recommend you to mine only on trusted (self owned!) pools.
+
 Basically it may be run with the following command (remember first to install dependencies with ```$ composer```): 
 ```
 $ php bin/php-proxy-stratum-daemon.php
