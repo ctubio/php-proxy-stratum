@@ -1,7 +1,7 @@
 # php-proxy-stratum
 ReactPHP **stratum+tcp** proxy between miners and pools with database and minimal web interface.
 
-Basically it may be run with the following command: 
+Basically it may be run with the following command (remember first to install dependencies with ```$ composer```): 
 ```
 $ php bin/php-proxy-stratum-daemon.php
 ```
