@@ -56,7 +56,9 @@ wtfisconnected
             "diff": 1042,
             "2min avg": "1,23 TH\/s"
         }
-    ]
+    ],
+    "pid": 22559,
+    "mem": "1.5mb"
 }
 ```
 
