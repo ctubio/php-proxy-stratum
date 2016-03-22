@@ -19,6 +19,8 @@ Or use the init script:
 ```
 And feel free to connect your miners at port ```3333```, also you can configure your webserver with ```pub/``` as the document root and ```php-proxy-stratum.php``` as the index file.
 
+The mining and all other configurations are hardcoded, please review/modify the daemon code before run it.
+
 Currently the web interface features auto refresh and pool switch; a snapshot may look like (yes, is just json output):
 ```
 2015-12-10 17:32:52
