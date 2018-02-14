@@ -132,14 +132,13 @@ class Stratum {
   }
 
   private function k($l, $c, $m) {
-    if (!isset($l->o[$c->k])) $this->e($c->k.' does not compute (but '.$m.').');
-    else {
+    if (!isset($l->o[$c->k])) $this->e($c->k.' does not compute (but '.$m.').') 
       $c->_p = -1;
       if ($c->p) $c->p->close();
       $c->close();
       unset($l->o[$k=$c->k]);
       $this->e($k.' '.$m.', killed.');
-    }
+    
   }
 
   private function h($d, $c, $l) {
